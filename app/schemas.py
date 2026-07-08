@@ -19,6 +19,7 @@ class UserResponse(BaseModel):
     nombre: str
     rol: str
     created_at: datetime
+    status: Literal["online", "offline"] = "offline"
 
     model_config = {"from_attributes": True}
 
@@ -44,6 +45,12 @@ class CreateUserRequest(BaseModel):
     nombre: str
     email: EmailStr
     rol: Literal["admin", "user"] = "user"
+
+
+class UpdateUserRequest(BaseModel):
+    """Payload para actualizar un empleado existente (nombre y rol)."""
+    nombre: str
+    rol: Literal["admin", "user"]
 
 
 # ─────────────────────────────────────────────────────────

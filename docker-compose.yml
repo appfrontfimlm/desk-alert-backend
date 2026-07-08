@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  officeping-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: officeping-backend
+    restart: always
+    ports:
+      # Mapeo del puerto solicitado 3040 en el host al puerto interno 8000 del contenedor
+      - "3040:8000"
+    environment:
+      # Ubicar la base de datos dentro del volumen persistente montado
+      - DATABASE_URL=sqlite:///./data/officeping.db
+    volumes:
+      # Persistir la base de datos SQLite entre reinicios o reconstrucciones del contenedor
+      - ./data:/app/data

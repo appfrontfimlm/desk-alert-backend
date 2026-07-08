@@ -21,7 +21,12 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
 from app.models import User
-from app.schemas import ConnectionStatusResponse, CreateUserRequest, UserResponse
+from app.schemas import (
+    ConnectionStatusResponse,
+    CreateUserRequest,
+    UpdateUserRequest,
+    UserResponse,
+)
 from app.connection_manager import manager
 
 router = APIRouter(prefix="/api/admin", tags=["Administración"])
@@ -99,6 +104,74 @@ def create_user(
     db.refresh(new_user)
 
     return new_user  # type: ignore[return-value]
+
+
+# ─── CU-02.1: Editar empleado ─────────────────────────────────────────────────
+
+@router.put(
+    "/users/{user_id}",
+    response_model=UserResponse,
+    summary="Actualizar nombre y rol de un empleado (requiere rol admin)",
+    description=(
+        "Actualiza el nombre y el rol de un empleado existente. "
+        "El correo electrónico permanece inmutable."
+    ),
+)
+def update_user(
+    user_id: int,
+    payload: UpdateUserRequest,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(_require_admin),
+) -> UserResponse:
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"El empleado con ID {user_id} no existe.",
+        )
+
+    target_user.nombre = payload.nombre
+    target_user.rol = payload.rol
+    db.commit()
+    db.refresh(target_user)
+
+    return target_user  # type: ignore[return-value]
+
+
+# ─── CU-02.2: Eliminar empleado ───────────────────────────────────────────────
+
+@router.delete(
+    "/users/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar un empleado (requiere rol admin)",
+    description=(
+        "Elimina a un empleado de la base de datos. No permite que el administrador "
+        "elimine su propia cuenta. Desconecta su WebSocket si está activo."
+    ),
+)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(_require_admin),
+) -> None:
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"El empleado con ID {user_id} no existe.",
+        )
+
+    if target_user.email == _admin.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No puedes eliminar tu propia cuenta de administrador.",
+        )
+
+    # Desconectar el WebSocket si el empleado está conectado
+    manager.disconnect(target_user.email)
+
+    db.delete(target_user)
+    db.commit()
 
 
 # ─── CU-03: Monitoreo de conexiones activas ───────────────────────────────────

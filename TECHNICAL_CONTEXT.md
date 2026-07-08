@@ -363,6 +363,67 @@ async function createEmployee(adminEmail, { nombre, email, rol = 'user' }) {
 
 ---
 
+### `PUT /api/admin/users/{user_id}`
+**Actualizar nombre y rol de un empleado. Requiere rol admin.**
+
+El correo electrónico permanece inmutable en el sistema.
+
+#### Request
+
+```
+PUT http://localhost:8000/api/admin/users/2
+Content-Type: application/json
+X-Admin-Email: admin@empresa.com
+```
+
+**Body:**
+```json
+{
+  "nombre": "Juan Pérez Modificado",
+  "rol": "admin"
+}
+```
+
+#### Responses
+
+**`200 OK` — Empleado actualizado:**
+```json
+{
+  "id": 2,
+  "email": "juan@empresa.com",
+  "nombre": "Juan Pérez Modificado",
+  "rol": "admin",
+  "created_at": "2026-07-03T18:25:40.769901"
+}
+```
+
+---
+
+### `DELETE /api/admin/users/{user_id}`
+**Eliminar un empleado. Requiere rol admin.**
+
+No permite que el administrador elimine su propia cuenta autenticada.
+
+#### Request
+
+```
+DELETE http://localhost:8000/api/admin/users/2
+X-Admin-Email: admin@empresa.com
+```
+
+#### Responses
+
+**`204 No Content` — Empleado eliminado exitosamente.**
+
+**`400 Bad Request` — Intento de eliminarse a sí mismo:**
+```json
+{
+  "detail": "No puedes eliminar tu propia cuenta de administrador."
+}
+```
+
+---
+
 ### `GET /api/admin/connections`
 **Monitoreo del estado de conexión WebSocket de todos los empleados.**
 
@@ -557,9 +618,12 @@ Este es el evento que debe disparar el pop-up intrusivo en Electron.
 | `from_email` | `string` | Email del emisor |
 | `message` | `string` | Mensaje personalizado del emisor |
 
-> **⚡ Acción crítica del frontend:** Al recibir un mensaje con `type === "receive_alert"`,
+> **⚡ Acción crítica del frontend (Soporte Multipantalla y Overlay Oscurecido):** Al recibir un mensaje con `type === "receive_alert"`,
 > el proceso de React debe notificar al proceso principal de Electron vía IPC
 > (`ipcRenderer.send(...)`) para que instancie la `BrowserWindow` intrusiva.
+> Electron utiliza la API `screen.getCursorScreenPoint()` y `screen.getDisplayNearestPoint()` para posicionar la alerta en la **pantalla activa** del usuario (>2 monitores).
+> La ventana abarca toda la pantalla activa con `transparent: true` y un fondo oscuro semitransparente para evitar distracciones con las aplicaciones abiertas alrededor.
+
 
 ---
 
@@ -689,6 +753,8 @@ wsClient.sendAlert('pedro@empresa.com', '¡Necesito que te quites los audífonos
 | `POST` | `/api/auth/identify` | ❌ | Body: `{email}` | `200` `UserResponse` |
 | `GET` | `/api/users` | ❌ | — | `200` `UserResponse[]` |
 | `POST` | `/api/admin/users` | ✅ Header | Body: `{nombre, email, rol?}` | `201` `UserResponse` |
+| `PUT` | `/api/admin/users/{id}` | ✅ Header | Body: `{nombre, rol}` | `200` `UserResponse` |
+| `DELETE` | `/api/admin/users/{id}` | ✅ Header | — | `204 No Content` |
 | `GET` | `/api/admin/connections` | ✅ Header | — | `200` `ConnectionStatusResponse[]` |
 | `WS` | `/ws` | ❌ | JSON messages | Respuestas JSON tipadas |
 

@@ -181,4 +181,4 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         # Sin esto, el servidor intentaría enviar alertas a sockets muertos
         # y /api/admin/connections mostraría estados incorrectos.
         if registered_email:
-            manager.disconnect(registered_email)
+            manager.disconnect(registered_email, websocket=websocket)

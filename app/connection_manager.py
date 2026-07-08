@@ -34,8 +34,14 @@ class ConnectionManager:
         self._connections[email] = websocket
         logger.info("WS conectado: %s  (total activos: %d)", email, self.count)
 
-    def disconnect(self, email: str) -> None:
+    def disconnect(self, email: str, websocket: WebSocket | None = None) -> None:
         """Elimina la conexión del mapa. Seguro si el email no existe."""
+        if websocket is not None and self._connections.get(email) is not websocket:
+            logger.info(
+                "WS cerrado para '%s', pero el socket activo en memoria es diferente. Manteniendo conexión.",
+                email,
+            )
+            return
         removed = self._connections.pop(email, None)
         if removed is not None:
             logger.info(

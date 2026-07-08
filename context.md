@@ -91,6 +91,17 @@ Enviado por el backend únicamente al socket del empleado destinatario.
 * **Payload Request:** `{ "nombre": "Pedro", "email": "pedro@empresa.com", "rol": "user" }`
 * **Comportamiento:** Crea el registro en SQLite y retorna el usuario creado con HTTP 201.
 
+### CU-02.1: Gestión de Usuarios - Editar Empleado (Panel Admin)
+* **Endpoint:** `PUT /api/admin/users/{user_id}`
+* **Permisos:** Requiere validar que el usuario que realiza la petición sea administrador (`header X-Admin-Email`).
+* **Payload Request:** `{ "nombre": "Pedro López", "rol": "admin" }`
+* **Comportamiento:** Actualiza el nombre y el rol del usuario en SQLite. El correo electrónico permanece inmutable. Retorna HTTP 200 con el usuario actualizado.
+
+### CU-02.2: Gestión de Usuarios - Eliminar Empleado (Panel Admin)
+* **Endpoint:** `DELETE /api/admin/users/{user_id}`
+* **Permisos:** Requiere validar que el usuario que realiza la petición sea administrador (`header X-Admin-Email`).
+* **Comportamiento:** Impide eliminar la cuenta del administrador autenticado. Si el empleado está conectado al WebSocket, lo desconecta en memoria e inmediatamente elimina su registro de SQLite devolviendo HTTP 204.
+
 ### CU-03: Monitoreo de Conexiones Activas (Panel Admin)
 * **Endpoint:** `GET /api/admin/connections`
 * **Comportamiento:**

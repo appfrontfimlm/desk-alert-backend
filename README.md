@@ -168,4 +168,18 @@ sudo systemctl enable --now officeping-backend
 sudo systemctl status officeping-backend
 ```
 
-> 📚 **Nota:** Para instrucciones completas del empaquetado del cliente de escritorio (`AppImage` y `.deb`), consulta el **[README principal](../README.md)** en la raíz del proyecto.
+### Opción C: Docker Compose (Puerto 3040)
+Para desplegar el servidor backend usando Docker en el puerto **3040**, ejecuta desde la carpeta `/backend`:
+
+```bash
+# Construir e iniciar en segundo plano
+docker compose up -d --build
+
+# Ver logs del servidor en tiempo real
+docker compose logs -f
+```
+
+* **Puerto externo:** `http://localhost:3040` (API REST en `http://localhost:3040/docs` y WebSocket en `ws://localhost:3040/ws`).
+* **Persistencia:** Los datos y la base de datos de SQLite se guardan automáticamente en la carpeta `./data` del host para que no se pierdan al reiniciar el contenedor.
+
+> 📚 **Nota:** Para instrucciones completas del empaquetado del cliente de escritorio (`AppImage`, `.deb` y `.exe`), consulta el **[README principal](../README.md)** en la raíz del proyecto.
