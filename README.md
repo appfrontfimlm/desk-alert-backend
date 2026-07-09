@@ -107,20 +107,31 @@ El email debe corresponder a un usuario con `rol = "admin"` en la base de datos.
 
 ## Crear el primer administrador
 
-La primera vez que se ejecuta el servidor, la BD está vacía. Para crear el primer administrador directamente desde SQLite:
+La primera vez que se ejecuta el servidor, la base de datos está vacía. Puedes crear el primer administrador con contraseña directamente utilizando el script incluido o un comando de Python:
 
+### Opción A: Usar el script `create_admin.py` (Recomendado)
 ```bash
-# Con Python / SQLAlchemy (recomendado)
+python3 create_admin.py --email app.front@fundacionmarialuisa.org --nombre "Administrador" --password "Admin123!"
+```
+
+### Opción B: Con Python / SQLAlchemy desde consola
+```bash
 python3 -c "
 from app.database import SessionLocal, Base, engine
 from app.models import User
+from app.security import get_password_hash
 Base.metadata.create_all(bind=engine)
 db = SessionLocal()
-admin = User(nombre='Administrador', email='admin@empresa.com', rol='admin')
+admin = User(
+    nombre='Administrador',
+    email='admin@empresa.com',
+    password_hash=get_password_hash('Admin123!'),
+    rol='admin'
+)
 db.add(admin)
 db.commit()
 db.close()
-print('Admin creado exitosamente.')
+print('Admin creado exitosamente con contraseña.')
 "
 ```
 

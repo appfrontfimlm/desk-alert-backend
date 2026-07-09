@@ -13,9 +13,40 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
 from app.models import User
-from app.schemas import IdentifyRequest, UserResponse
+from app.schemas import IdentifyRequest, LoginRequest, TokenResponse, UserResponse
+from app.security import create_access_token, verify_password
 
 router = APIRouter(prefix="/api/auth", tags=["Autenticación"])
+
+
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    summary="Iniciar sesión con correo corporativo y contraseña",
+    description=(
+        "Valida el correo y la contraseña del empleado. Si son correctos, "
+        "retorna un token JWT de acceso indefinido junto con el perfil del usuario."
+    ),
+)
+def login_user(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
+    user = db.query(User).filter(User.email == payload.email).first()
+
+    if user is None or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Correo o contraseña incorrectos.",
+        )
+
+    access_token = create_access_token(
+        data={"sub": user.email, "rol": user.rol}
+    )
+
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=user,
+    )
+
 
 
 @router.post(

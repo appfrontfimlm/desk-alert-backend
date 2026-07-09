@@ -10,7 +10,7 @@ Endpoint:
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
+from app.dependencies import get_db, get_current_user
 from app.models import User
 from app.schemas import UserResponse
 from app.routers.websockets import manager
@@ -28,7 +28,10 @@ router = APIRouter(prefix="/api", tags=["Usuarios"])
         "de selección de destinatario al momento de enviar una alerta."
     ),
 )
-def list_users(db: Session = Depends(get_db)) -> list[UserResponse]:
+def list_users(
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+) -> list[UserResponse]:
     """Obtiene todos los empleados ordenados por nombre ascendente y su estado de socket."""
     users = db.query(User).order_by(User.nombre.asc()).all()
     result: list[UserResponse] = []

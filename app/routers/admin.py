@@ -28,6 +28,7 @@ from app.schemas import (
     UserResponse,
 )
 from app.connection_manager import manager
+from app.security import get_password_hash
 
 router = APIRouter(prefix="/api/admin", tags=["Administración"])
 
@@ -97,6 +98,7 @@ def create_user(
     new_user = User(
         nombre=payload.nombre,
         email=str(payload.email),
+        password_hash=get_password_hash(payload.password),
         rol=payload.rol,
     )
     db.add(new_user)

@@ -33,6 +33,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import User
 from app.connection_manager import manager
+from app.security import decode_access_token
 
 router = APIRouter(tags=["WebSockets"])
 logger = logging.getLogger("officeping.ws")
@@ -59,7 +60,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
 
     Flujo de vida de una conexión:
     1. El cliente se conecta. Se acepta la conexión sin email (se registra luego).
-    2. El primer mensaje esperado es de tipo 'register' con el email del empleado.
+    2. El primer mensaje esperado es de tipo 'register' con el email y token del empleado.
     3. El servidor entra en un loop infinito esperando mensajes.
     4. Al recibir 'send_alert', se enruta el payload al destinatario.
     5. Al desconectarse (WebSocketDisconnect o cualquier error), se limpia el mapa.
@@ -89,6 +90,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             # ── Manejar tipo 'register' ──────────────────────────────────────
             if msg_type == "register":
                 email: str | None = data.get("email")
+                token: str | None = data.get("token")
                 if not email:
                     await websocket.send_json({
                         "type": "error",
@@ -96,9 +98,17 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     })
                     continue
 
+                if token:
+                    payload = decode_access_token(token)
+                    if not payload or payload.get("sub") != email:
+                        await websocket.send_json({
+                            "type": "error",
+                            "detail": "Token de autenticación inválido para este correo.",
+                        })
+                        await websocket.close(code=4000)
+                        return
+
                 # Registrar (o re-registrar si ya tenía una conexión previa)
-                # Nota: connect() hace accept() internamente, pero aquí ya aceptamos arriba.
-                # Por eso registramos directamente en el mapa sin llamar manager.connect().
                 manager._connections[email] = websocket  # noqa: SLF001
                 registered_email = email
                 logger.info("WS registrado: %s (total activos: %d)", email, manager.count)

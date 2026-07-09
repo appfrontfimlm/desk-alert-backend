@@ -31,6 +31,13 @@ class ConnectionStatusResponse(BaseModel):
     status: Literal["online", "offline"]
 
 
+class TokenResponse(BaseModel):
+    """Respuesta con token JWT de sesión y perfil del usuario."""
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
 # ─────────────────────────────────────────────────────────
 # Schemas de Petición (Request)
 # ─────────────────────────────────────────────────────────
@@ -40,10 +47,17 @@ class IdentifyRequest(BaseModel):
     email: EmailStr
 
 
+class LoginRequest(BaseModel):
+    """Payload para autenticación con correo y contraseña."""
+    email: EmailStr
+    password: str
+
+
 class CreateUserRequest(BaseModel):
     """Payload para crear un nuevo empleado (usado por el administrador)."""
     nombre: str
     email: EmailStr
+    password: str
     rol: Literal["admin", "user"] = "user"
 
 
@@ -61,6 +75,7 @@ class WSRegisterMessage(BaseModel):
     """Mensaje de registro enviado por el cliente al conectarse al WS."""
     type: Literal["register"]
     email: EmailStr
+    token: str | None = None
 
 
 class WSSendAlertMessage(BaseModel):
