@@ -123,7 +123,9 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             elif msg_type == "send_alert":
                 from_email: str | None = data.get("from_email")
                 to_email: str | None = data.get("to_email")
-                message: str = data.get("message", "")
+                raw_message = data.get("message", "")
+                # Limitar el mensaje a un máximo de 300 caracteres
+                message: str = str(raw_message)[:300] if raw_message is not None else ""
 
                 if not from_email or not to_email:
                     await websocket.send_json({

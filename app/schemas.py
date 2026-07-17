@@ -5,7 +5,7 @@ Separados en schemas de Request (entrada) y Response (salida).
 
 from datetime import datetime
 from typing import Literal
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 # ─────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ class WSSendAlertMessage(BaseModel):
     type: Literal["send_alert"]
     from_email: EmailStr
     to_email: EmailStr
-    message: str
+    message: str = Field(..., max_length=300)
 
 
 class WSReceiveAlertMessage(BaseModel):
@@ -91,4 +91,4 @@ class WSReceiveAlertMessage(BaseModel):
     type: Literal["receive_alert"]
     from_name: str
     from_email: str
-    message: str
+    message: str = Field(..., max_length=300)
